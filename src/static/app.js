@@ -1,8 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
   const activitiesList = document.getElementById("activities-list");
-  const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const signupModal = document.getElementById("signup-modal");
+  const activityInput = document.getElementById("activity");
+  const closeBtn = document.querySelector(".close");
+  const emailInput = document.getElementById("email");
+
+  // Modal functions
+  function openModal(activityName) {
+    activityInput.value = activityName;
+    emailInput.value = "";
+    signupModal.classList.remove("hidden");
+  }
+
+  function closeModal() {
+    signupModal.classList.add("hidden");
+    messageDiv.classList.add("hidden");
+  }
+
+  closeBtn.addEventListener("click", closeModal);
+
+  window.addEventListener("click", (event) => {
+    if (event.target === signupModal) {
+      closeModal();
+    }
+  });
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -37,6 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>`
             : `<p><em>No participants yet</em></p>`;
 
+        const isAvailable = spotsLeft > 0;
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
@@ -45,15 +70,18 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants-container">
             ${participantsHTML}
           </div>
+          <button class="register-btn" data-activity="${name}" ${!isAvailable ? "disabled" : ""}>
+            ${isAvailable ? "Register Student" : "Full"}
+          </button>
         `;
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        activitySelect.appendChild(option);
+        // Add event listener to register button
+        const registerBtn = activityCard.querySelector(".register-btn");
+        if (isAvailable) {
+          registerBtn.addEventListener("click", () => openModal(name));
+        }
       });
 
       // Add event listeners to delete buttons
@@ -136,6 +164,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Refresh activities list to show updated participants
         fetchActivities();
+
+        // Close modal after success
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
